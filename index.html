@@ -1,0 +1,244 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creature Following Cursor</title>
+<style>
+    body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        cursor: none;
+    }
+    canvas {
+        display: block;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+class Node {
+    constructor(x, y, size) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+    }
+}
+
+class Creature {
+    constructor(segmentCount, speed) {
+        this.nodes = [];
+        this.speed = speed;
+        for (let i = 0; i < segmentCount; i++) {
+            this.nodes.push(new Node(0, 0, 8));
+        }
+        this.end = { x: 0, y: 0 };
+    }
+
+    updateRelative() {
+        // could add more physics here if needed
+    }
+
+    moveTo(x, y) {
+        this.nodes[0].x = x;
+        this.nodes[0].y = y;
+
+        for (let i = 1; i < this.nodes.length; i++) {
+            let node = this.nodes[i];
+            let prev = this.nodes[i - 1];
+            let dx = prev.x - node.x;
+            let dy = prev.y - node.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            let angle = Math.atan2(dy, dx);
+            let targetX = prev.x - Math.cos(angle) * 10;
+            let targetY = prev.y - Math.sin(angle) * 10;
+
+            node.x += (targetX - node.x) * 0.5;
+            node.y += (targetY - node.y) * 0.5;
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = "lime";
+        for (let node of this.nodes) {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+}
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+window.addEventListener("mousemove", e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+
+const creature = new Creature(20, 0.5);
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    creature.moveTo(mouse.x, mouse.y);
+    creature.draw(ctx);
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Creature Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Creature class
+        class Creature {
+            constructor(x, y, segmentCount = 10) {
+                this.head = { x, y };
+                this.segments = [];
+                this.speed = 3;
+                this.segmentDistance = 20;
+                
+                // Create segments
+                for (let i = 0; i < segmentCount; i++) {
+                    this.segments.push({
+                        x: x - (i + 1) * this.segmentDistance,
+                        y: y
+                    });
+                }
+            }
+            
+            update(targetX, targetY) {
+                // Move head toward target
+                const dx = targetX - this.head.x;
+                const dy = targetY - this.head.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 5) {
+                    this.head.x += (dx / dist) * this.speed;
+                    this.head.y += (dy / dist) * this.speed;
+                }
+                
+                // Update segments
+                let prev = this.head;
+                for (let i = 0; i < this.segments.length; i++) {
+                    const segment = this.segments[i];
+                    const dx = prev.x - segment.x;
+                    const dy = prev.y - segment.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > this.segmentDistance) {
+                        segment.x = prev.x - (dx / dist) * this.segmentDistance;
+                        segment.y = prev.y - (dy / dist) * this.segmentDistance;
+                    }
+                    
+                    prev = segment;
+                }
+            }
+            
+            draw() {
+                // Draw head
+                ctx.fillStyle = '#ff5555';
+                ctx.beginPath();
+                ctx.arc(this.head.x, this.head.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw segments
+                ctx.fillStyle = '#55aaff';
+                for (const segment of this.segments) {
+                    ctx.beginPath();
+                    ctx.arc(segment.x, segment.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw connections
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.head.x, this.head.y);
+                
+                for (const segment of this.segments) {
+                    ctx.lineTo(segment.x, segment.y);
+                }
+                ctx.stroke();
+            }
+        }
+        
+        // Create creature
+        const creature = new Creature(canvas.width / 2, canvas.height / 2, 15);
+        
+        // Mouse position
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        
+        // Track mouse movement
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        // Handle touch for mobile
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        }, { passive: false });
+        
+        // Animation loop
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw creature
+            creature.update(mouseX, mouseY);
+            creature.draw();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
